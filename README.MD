@@ -15,13 +15,13 @@ Every communication is performed through sockets.
 - **Browser**: A generic client application that can make requests to different services within the network.
 
 ## Network Concept
-[IMAGE HERE]
+![Network Concept](https://github.com/andrade-paulo/SecurityNetwork/blob/main/SecurityNet.jpg)
 
 ## DNS Architecture Diagram
-[IMAGE HERE]
+![DNS Architecture Diagram](https://github.com/andrade-paulo/SecurityNetwork/blob/main/SecurityNet_DNS.jpg)
 
 ## Casio Architecture Diagram
-[IMAGE HERE]
+![Casio Architecture Diagram](https://github.com/andrade-paulo/SecurityNetwork/blob/main/SecurityNet_Casio.jpg)
 
 # Security Measures Implemented
 - **Confidentiality**: An RSA handshake is performed at the beginning of each session to securely exchange the symmetric keys used for encryption.
@@ -29,5 +29,5 @@ Every communication is performed through sockets.
 - **Authentication & Integrity**: HMAC (Hash-based Message Authentication Code) is used to verify the authenticity and integrity of the messages.
 
 ## Security Handshake
-[IMAGE HERE]
+![Security Handshake](https://github.com/andrade-paulo/SecurityNetwork/blob/main/SecurityNet_Handshake.png)
 
