@@ -1,5 +1,5 @@
 # SecurityNet
-This is a project that simulates a whole local network with different services and a generic client. The main goal of this project is to study network security concepts and practices by implementing various security measures and protocols within the simulated environment.
+This is a Computer Security class project that simulates a whole local network with different services and a generic client. The main goal of this project is to study network security concepts and practices by implementing various security measures and protocols within the simulated environment.
 
 # Technologies Used
 - **Programming Language**: Java 17
