@@ -1,23 +1,20 @@
-package com.securitynet;
+package com.securitynet.casio;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.securitynet.model.NameTable;
-import com.securitynet.service.ApplicationHandler;
+import com.securitynet.casio.service.ApplicationHandler;
 
-public class DNS {
-    private static NameTable nameTable;
-
+public class CasioApplication {
     public static void main(String[] args) {
-        System.out.println("===================");
-        System.out.println("Starting DNS Server");
-        System.out.println("===================\n");
+        System.out.println("=====================");
+        System.out.println("Starting Casio Server");
+        System.out.println("=====================\n");
 
         // Address configuration
         String address = "localhost";
-        int port = 8053;
+        int port = 9002;
 
         if (args.length >= 1) {
             address = args[0];
@@ -30,19 +27,16 @@ public class DNS {
             }
         }
 
-        // Initialize the name table
-        nameTable = new NameTable();
-
         // Start the server
         try (ServerSocket socket = new ServerSocket(port)) {
-            System.out.println("DNS Server started on " + address + ":" + port);
+            System.out.println("Casio Server started on " + address + ":" + port);
             while (true) {
                 Socket clientSocket = socket.accept();
-                ApplicationHandler handler = new ApplicationHandler(clientSocket, nameTable);
+                ApplicationHandler handler = new ApplicationHandler(clientSocket);
                 new Thread(handler).start();
             }
         } catch (IOException e) {
-            System.err.println("Error starting DNS Server: " + e.getMessage());
+            System.err.println("Error starting Casio Server: " + e.getMessage());
         }
     }
 }

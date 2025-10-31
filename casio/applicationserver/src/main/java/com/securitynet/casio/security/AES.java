@@ -1,4 +1,4 @@
-package com.securitynet.security;
+package com.securitynet.casio.security;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -26,6 +26,7 @@ public class AES {
         try {
             Cipher cipher = Cipher.getInstance(CIPHER_INSTANCE);
             
+            // Generate random Initialization Vector (IV)
             byte[] iv = new byte[IV_LENGTH];
             new SecureRandom().nextBytes(iv);
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -34,15 +35,19 @@ public class AES {
 
             byte[] encryptedMessageBytes = cipher.doFinal(openText.getBytes());
             
+            // Concat IV e Ciphertext
             byte[] ivAndCiphertext = new byte[IV_LENGTH + encryptedMessageBytes.length];
             System.arraycopy(iv, 0, ivAndCiphertext, 0, IV_LENGTH);
             System.arraycopy(encryptedMessageBytes, 0, ivAndCiphertext, IV_LENGTH, encryptedMessageBytes.length);
 
-            return Base64.getEncoder().encodeToString(ivAndCiphertext);
+            // Encrypted message in Base64
+            String encryptedMessage = Base64.getEncoder().encodeToString(ivAndCiphertext);
+
+            System.out.println(">> Mensagem cifrada (com IV): " + encryptedMessage);
+            return encryptedMessage;
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-            System.err.println("Erro ao criptografar: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -53,10 +58,12 @@ public class AES {
         try {
             byte[] ivAndCiphertext = Base64.getDecoder().decode(encryptedTextBase64);
             
+            // Extract IV
             byte[] iv = new byte[IV_LENGTH];
             System.arraycopy(ivAndCiphertext, 0, iv, 0, IV_LENGTH);
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
+            // Extract Ciphertext
             int ciphertextLength = ivAndCiphertext.length - IV_LENGTH;
             byte[] ciphertext = new byte[ciphertextLength];
             System.arraycopy(ivAndCiphertext, IV_LENGTH, ciphertext, 0, ciphertextLength);
@@ -69,7 +76,6 @@ public class AES {
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-            System.err.println("Erro ao descriptografar: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

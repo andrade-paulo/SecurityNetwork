@@ -1,21 +1,14 @@
-package com.securitynet.model.entities;
+package com.securitynet.model;
 
-public class DNSMessage {
+public class Message {
     private String instruction;
     private String metadata;
     private String hmac;
 
-    public DNSMessage(String instruction, String metadata) {
+    public Message(String instruction, String metadata) {
         this.instruction = instruction;
         this.metadata = metadata;
         this.hmac = "";
-    }
-
-    public DNSMessage(String rawMessage) {
-        String parts[] = rawMessage.split(";", 3);
-        this.instruction = parts[0];
-        this.metadata = parts.length > 1 ? parts[1] : "";
-        this.hmac = parts.length > 2 ? parts[2] : "";
     }
 
     public String getInstruction() {
@@ -32,6 +25,10 @@ public class DNSMessage {
 
     public String getHmac() {
         return hmac;
+    }
+
+    public void setHmac(String hmac) {
+        this.hmac = hmac;
     }
 
     @Override

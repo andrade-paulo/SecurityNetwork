@@ -1,4 +1,4 @@
-package com.securitynet.service;
+package com.securitynet.casio.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,30 +9,33 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import com.securitynet.model.NameTable;
-import com.securitynet.model.entities.Message;
-import com.securitynet.security.AES;
-import com.securitynet.security.Util;
+
+import com.securitynet.casio.model.entities.Message;
+import com.securitynet.casio.security.AES;
+import com.securitynet.casio.security.Util;
 
 public class ApplicationHandler implements Runnable {
     private Socket socket;
     private boolean connection = true;
-    private NameTable nameTable;
     private String socketAddress;
+
+    private Calculator calculator;
 
     private KeyPair rsaKeyPair;
     private SecretKey clientAesKey;
     private byte[] clientAesKeyBytes;
     private AES aesCipher; 
-    
-    public ApplicationHandler(Socket socket, NameTable nameTable) {
+
+    public ApplicationHandler(Socket socket) {
         this.socket = socket;
-        this.nameTable = nameTable;
         this.socketAddress = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
         
+        this.calculator = new Calculator();
+
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
             kpg.initialize(2048); 
@@ -44,7 +47,6 @@ public class ApplicationHandler implements Runnable {
 
         System.out.println("New connection from " + this.socketAddress);
     }
-
 
     @Override
     public void run() {
@@ -74,10 +76,21 @@ public class ApplicationHandler implements Runnable {
             
             System.out.println("Handshake com " + this.socketAddress + " concluído. Chave AES estabelecida.");
 
+            // Send wellcome message
+            String welcomeMessage = "Welcome to Casio Secure Calculator Service!\n" +
+                                    "You can perform operations: ADD, SUBTRACT, MULTIPLY, DIVIDE.\n" +
+                                    "Example: ADD 9+8\n" +
+                                    "Send 'EXIT' to close the connection.\n";
+
+            Message welcomeMsgObj = new Message("WELCOME", welcomeMessage);
+
+            String encryptedWelcomeMsg = aesCipher.encrypt(welcomeMsgObj.toString());
+            out.println(encryptedWelcomeMsg);
+
             // Main communication loop
             String inputLine;
+
             while (connection && (inputLine = in.readLine()) != null) {
-                
                 String decryptedInputLine = aesCipher.decrypt(inputLine);
                 if (decryptedInputLine == null) {
                     out.println(aesCipher.encrypt("ERROR: Invalid message decryption."));
@@ -97,12 +110,12 @@ public class ApplicationHandler implements Runnable {
 
                 if (instruction.equals("ADD")) {
                     response = add(message);
-                } else if (instruction.equals("GET")) {
-                    response = get(message);
-                } else if (instruction.equals("REMOVE")) {
-                    response = remove(message);
-                } else if (instruction.equals("UPDATE")) {
-                    response = update(message);
+                } else if (instruction.equals("SUBTRACT")) {
+                    response = subtract(message);
+                } else if (instruction.equals("MULTIPLY")) {
+                    response = multiply(message);
+                } else if (instruction.equals("DIVIDE")) {
+                    response = divide(message);
                 } else if (instruction.equals("EXIT")) {
                     response = "Connection closing.";
                     connection = false;
@@ -112,9 +125,10 @@ public class ApplicationHandler implements Runnable {
 
                 out.println(aesCipher.encrypt(response));
             }
-
-        } catch (IOException e) {
-            System.err.println("Error handling connection from " + this.socketAddress + ": " + e.getMessage());
+        } 
+        
+        catch (IOException e) {
+            //
         } catch (Exception e) {
             System.err.println("Erro de criptografia na conexão " + this.socketAddress + ": " + e.getMessage());
         } finally {
@@ -123,7 +137,7 @@ public class ApplicationHandler implements Runnable {
             } catch (IOException e) {
                 //
             }
-            System.out.println("Connection closed for " + this.socketAddress);
+            System.out.println("Connection closed for " + this.socketAddress + "\n");
         }
     }
 
@@ -142,66 +156,49 @@ public class ApplicationHandler implements Runnable {
 
 
     private String add(Message message) {
-        String[] parts = message.getMetadata().split(" ", 2);
-        if (parts.length < 2) {
-            return "ERROR: Invalid ADD format. Use: ADD <name> <value>";
-        }
+        String[] parts = message.getMetadata().split("\\+");
+        
+        int a = Integer.parseInt(parts[0]);
+        int b = Integer.parseInt(parts[1]);
+        
+        int result = calculator.add(a, b);
 
-        String name = parts[0];
-        String value = parts[1];
-
-        try {
-            nameTable.addName(name, value, this.clientAesKeyBytes); 
-            return "SUCCESS: Name added.";
-        } catch (IllegalArgumentException e) {
-            return "ERROR: " + e.getMessage();
-        }
+        return "RESULT: " + result;
     }
 
-    private String get(Message message) {
-        String name = message.getMetadata();
+    private String subtract(Message message) {
+        String[] parts = message.getMetadata().split("\\-");
+        
+        int a = Integer.parseInt(parts[0]);
+        int b = Integer.parseInt(parts[1]);
+        
+        int result = calculator.subtract(a, b);
 
-        try {
-            String value = nameTable.getName(name);
-            if (value != null) {
-                return "VALUE: " + value;
-            } else {
-                return "ERROR: NOT_FOUND";
-            }
-        } catch (IllegalArgumentException e) {
-            return "ERROR: " + e.getMessage();
-        }
+        return "RESULT: " + result;
     }
 
-    private String remove(Message message) {
-        String name = message.getMetadata();
+    private String multiply(Message message) {
+        String[] parts = message.getMetadata().split("\\*");
+        
+        int a = Integer.parseInt(parts[0]);
+        int b = Integer.parseInt(parts[1]);
+        
+        int result = calculator.multiply(a, b);
 
-        try {
-            nameTable.removeName(name, this.clientAesKeyBytes);
-            return "SUCCESS: Name removed.";
-        } catch (IllegalArgumentException e) {
-            return "ERROR: " + e.getMessage();
-        } catch (SecurityException e) {
-            return e.getMessage();
-        }
+        return "RESULT: " + result;
     }
 
-    private String update(Message message) {
-        String[] parts = message.getMetadata().split(" ", 2);
-        if (parts.length < 2) {
-            return "ERROR: Invalid UPDATE format. Use: UPDATE <name> <new_value>";
-        }
-
-        String name = parts[0];
-        String newValue = parts[1];
-
+    private String divide(Message message) {
+        String[] parts = message.getMetadata().split("\\/");
+        
+        int a = Integer.parseInt(parts[0]);
+        int b = Integer.parseInt(parts[1]);
+        
         try {
-            nameTable.updateName(name, newValue, this.clientAesKeyBytes);
-            return "SUCCESS: Name updated.";
+            double result = calculator.divide(a, b);
+            return "RESULT: " + result;
         } catch (IllegalArgumentException e) {
             return "ERROR: " + e.getMessage();
-        } catch (SecurityException e) {
-            return e.getMessage();
         }
     }
 }

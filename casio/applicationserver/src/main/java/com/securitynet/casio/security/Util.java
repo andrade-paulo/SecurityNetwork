@@ -1,4 +1,4 @@
-package com.securitynet.security;
+package com.securitynet.casio.security;
 
 import javax.crypto.Mac; 
 import javax.crypto.spec.SecretKeySpec; 
